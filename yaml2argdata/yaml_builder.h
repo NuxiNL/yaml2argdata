@@ -7,7 +7,7 @@
 #define YAML2ARGDATA_YAML_BUILDER_H
 
 #include <cassert>
-#include <sstream>
+#include <istream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -29,9 +29,8 @@ class YAMLBuilder : YAML::EventHandler {
   explicit YAMLBuilder(YAMLFactory<T>* factory) : factory_(factory), root_() {
   }
 
-  T Build(const std::string& input) {
-    std::istringstream stream(input);
-    YAML::Parser parser(stream);
+  T Build(std::istream* stream) {
+    YAML::Parser parser(*stream);
     root_ = factory_->GetNull({});
     parser.HandleNextDocument(*this);
     assert(stack_.empty() &&
