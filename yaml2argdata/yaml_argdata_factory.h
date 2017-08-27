@@ -7,6 +7,7 @@
 #define YAML2ARGDATA_YAML_ARGDATA_FACTORY_H
 
 #include <forward_list>
+#include <ios>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -32,7 +33,7 @@ class YAMLArgdataFactory : public YAMLFactory<const argdata_t*> {
   }
   const argdata_t* GetScalar(const YAML::Mark& mark, std::string_view tag,
                              std::string_view value) override {
-    // TODO(ed): Add support for integers, etc.
+    // TODO(ed): Make this logic more complete.
     if (tag == "tag:yaml.org,2002:bool") {
       if (value == "true")
         return argdata_t::true_();
@@ -41,6 +42,22 @@ class YAMLArgdataFactory : public YAMLFactory<const argdata_t*> {
       std::ostringstream ss;
       ss << "Unknown boolean value: " << value;
       throw YAML::ParserException(mark, ss.str());
+    } else if (tag == "tag:yaml.org,2002:int") {
+      {
+        std::istringstream ss((std::string(value)));
+        std::intmax_t i;
+        ss >> std::noskipws >> i;
+        if (ss && ss.eof())
+          return argdatas_.emplace_back(argdata_t::create_int(i)).get();
+      }
+      {
+        std::istringstream ss((std::string(value)));
+        std::uintmax_t i;
+        ss >> std::noskipws >> i;
+        if (ss && ss.eof())
+          return argdatas_.emplace_back(argdata_t::create_int(i)).get();
+      }
+      throw YAML::ParserException(mark, "Failed to parse integer literal");
     } else if (tag == "tag:yaml.org,2002:str") {
       return argdatas_
           .emplace_back(argdata_t::create_str(strings_.emplace_front(value)))
