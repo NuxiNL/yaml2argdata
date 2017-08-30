@@ -25,7 +25,7 @@ need to be added in the form of a separate adapter class.
 
 # Example usage
 
-```
+```cpp
 #include <yaml2argdata/yaml_argdata_factory.h>
 #include <yaml2argdata/yaml_builder.h>
 #include <yaml2argdata/yaml_canonicalizing_factory.h>
