@@ -30,11 +30,17 @@ need to be added in the form of a separate adapter class.
 #include <yaml2argdata/yaml_builder.h>
 #include <yaml2argdata/yaml_canonicalizing_factory.h>
 #include <yaml2argdata/yaml_error_factory.h>
+#include <yaml2argdata/yaml_factory.h>
 
 using yaml2argdata::YAMLArgdataFactory;
 using yaml2argdata::YAMLBuilder;
 using yaml2argdata::YAMLCanonicalizingFactory;
 using yaml2argdata::YAMLErrorFactory;
+using yaml2argdata::YAMLFactory;
+
+class MyOwnFileDescriptorFactory : public YAMLFactory<const argdata_t*> {
+  ...
+};
 
 ... {
   YAMLErrorFactory<const argdata_t*> error_factory;
