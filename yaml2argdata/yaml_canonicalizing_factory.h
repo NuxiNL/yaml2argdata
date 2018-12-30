@@ -24,6 +24,7 @@
 #ifndef YAML2ARGDATA_YAML_CANONICALIZING_FACTORY_H
 #define YAML2ARGDATA_YAML_CANONICALIZING_FACTORY_H
 
+#include <regex>
 #include <string_view>
 #include <vector>
 
@@ -36,8 +37,17 @@ namespace yaml2argdata {
 template <typename T>
 class YAMLCanonicalizingFactory : public YAMLFactory<T> {
  public:
+  // Regular expressions are obtained from YAML 1.2 section 10.3.2:
+  // "Tag resolution".
   explicit YAMLCanonicalizingFactory(YAMLFactory<const argdata_t*>* fallback)
-      : fallback_(fallback) {
+      : fallback_(fallback),
+        resolver_null_("null|Null|NULL|~|"),
+        resolver_bool_("true|True|TRUE|false|False|FALSE"),
+        resolver_int_("[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+"),
+        resolver_float_(
+            "[-+]?(\\.[0-9]+|[0-9]+(\\.[0-9]*)?)([eE][-+]?[0-9]+)?|"
+            "[-+]?(\\.inf|\\.Inf|\\.INF)|"
+            "\\.nan|\\.NaN|\\.NAN") {
   }
 
   T GetNull(const YAML::Mark& mark) override {
@@ -49,8 +59,17 @@ class YAMLCanonicalizingFactory : public YAMLFactory<T> {
     if (tag == "!") {
       tag = "tag:yaml.org,2002:str";
     } else if (tag == "?") {
-      // TODO(ed): Use heuristics to switch to other types.
-      tag = "tag:yaml.org,2002:str";
+      if (Matches(value, resolver_null_)) {
+        tag = "tag:yaml.org,2002:null";
+      } else if (Matches(value, resolver_bool_)) {
+        tag = "tag:yaml.org,2002:bool";
+      } else if (Matches(value, resolver_int_)) {
+        tag = "tag:yaml.org,2002:int";
+      } else if (Matches(value, resolver_float_)) {
+        tag = "tag:yaml.org,2002:float";
+      } else {
+        tag = "tag:yaml.org,2002:str";
+      }
     }
     return fallback_->GetScalar(mark, tag, value);
   }
@@ -72,7 +91,17 @@ class YAMLCanonicalizingFactory : public YAMLFactory<T> {
   }
 
  private:
+  static bool Matches(std::string_view value, const std::regex& r) {
+    std::match_results<std::string_view::const_iterator> m;
+    return std::regex_match(value.begin(), value.end(), m, r);
+  }
+
   YAMLFactory<const argdata_t*>* const fallback_;
+
+  const std::regex resolver_null_;
+  const std::regex resolver_bool_;
+  const std::regex resolver_int_;
+  const std::regex resolver_float_;
 };
 
 }  // namespace yaml2argdata

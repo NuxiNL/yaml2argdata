@@ -52,7 +52,8 @@ class YAMLArgdataFactory : public YAMLFactory<const argdata_t*> {
 
   const argdata_t* GetScalar(const YAML::Mark& mark, std::string_view tag,
                              std::string_view value) override {
-    // TODO(ed): Make this logic more complete.
+    // TODO(ed): Make this logic more complete. This should at least
+    // support the formats described in YAML 1.2 section 10.3.2.
     if (tag == "tag:yaml.org,2002:bool") {
       if (value == "true")
         return argdata_t::true_();
@@ -77,6 +78,8 @@ class YAMLArgdataFactory : public YAMLFactory<const argdata_t*> {
           return argdatas_.emplace_back(argdata_t::create_int(i)).get();
       }
       throw YAML::ParserException(mark, "Failed to parse integer literal");
+    } else if (tag == "tag:yaml.org,2002:null") {
+      return argdata_t::null();
     } else if (tag == "tag:yaml.org,2002:str") {
       return argdatas_
           .emplace_back(argdata_t::create_str(strings_.emplace_front(value)))
