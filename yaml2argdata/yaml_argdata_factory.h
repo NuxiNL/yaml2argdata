@@ -49,6 +49,7 @@ class YAMLArgdataFactory : public YAMLFactory<const argdata_t*> {
   const argdata_t* GetNull(const YAML::Mark& mark) override {
     return argdata_t::null();
   }
+
   const argdata_t* GetScalar(const YAML::Mark& mark, std::string_view tag,
                              std::string_view value) override {
     // TODO(ed): Make this logic more complete.
